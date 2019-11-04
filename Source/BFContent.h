@@ -46,7 +46,9 @@ public:
 	std::unordered_map<BFInput, std::string> input_name_map;// From a user input to a input name.
 	std::unordered_map<std::string, std::function<void()>> input_op_map;// From a input to a operation.
 
-	static int screen_keys[512];
+	static int screen_keys[512];// Static input keys.
+	static int screen_exit;
+
 };
 
 #endif // !BFCONTENT

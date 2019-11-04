@@ -1,4 +1,21 @@
 #include "BFDeviceRendererWin32.h"
+#include"BFContent.h"
+
+
+static LRESULT screen_events(HWND hWnd, UINT msg,
+	WPARAM wParam, LPARAM lParam) {
+	switch (msg) {
+	case WM_CLOSE: BFContent::screen_exit = 1; break;
+	case WM_KEYDOWN:
+		BFContent::screen_keys[wParam & 511] = 1;
+		break;
+	case WM_KEYUP: 
+		BFContent::screen_keys[wParam & 511] = 0; 
+		break;
+	default: return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+	return 0;
+}
 
 IBFDeviceRendererWin32::IBFDeviceRendererWin32()
 {

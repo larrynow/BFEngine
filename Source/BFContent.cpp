@@ -1,6 +1,7 @@
 #include "BFContent.h"
 
-
+int BFContent::screen_keys[512] = { 0 };
+int BFContent::screen_exit = 0;
 
 void BFContent::StartUp(BFDevice_t content_device, UINT screenWidth, UINT screenHeight)
 {

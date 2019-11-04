@@ -14,7 +14,7 @@ ABFActor::ABFActor()
 {
 	mPosition = { 0.f, 0.f, -200.f };
 	m_pCamera = new IBFCamera(mPosition);
-	mMoveSpeed = 10.f;
+	mMoveSpeed = 1.f;
 }
 
 ABFActor::~ABFActor()

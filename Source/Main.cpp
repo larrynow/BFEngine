@@ -70,9 +70,9 @@ int main()
 		
 		// Input.
 		//std::cout << screen_keys[87] << std::endl;
-		if (IS_KEY_DOWN(87))
+		if (BFContent::screen_keys[87]==1)
 		{
-			std::cout << BFContent::screen_keys[87] << std::endl;
+			//std::cout << BFContent::screen_keys[87] << std::endl;
 
 			auto input = content->input_name_map[BFInput::KEY_W];
 			auto op = content->input_op_map.at(input);

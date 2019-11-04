@@ -54,14 +54,14 @@
     <ClInclude Include="BFResourceManager.h">
       <Filter>源文件\Engine\Core</Filter>
     </ClInclude>
-    <ClInclude Include="BFMesh.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="BFContent.h">
+      <Filter>源文件\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="BFGeometry.h">
-      <Filter>头文件</Filter>
+      <Filter>源文件\Engine\Common</Filter>
     </ClInclude>
-    <ClInclude Include="BFContent.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="BFMesh.h">
+      <Filter>源文件\Engine\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -83,16 +83,16 @@
     <ClCompile Include="BFResourceManager.cpp">
       <Filter>源文件\Engine\Core</Filter>
     </ClCompile>
-    <ClCompile Include="BFMesh.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="BFGeometry.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="BFActor.cpp">
+      <Filter>源文件\Engine\Common</Filter>
     </ClCompile>
     <ClCompile Include="BFContent.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\Engine\Core</Filter>
     </ClCompile>
-    <ClCompile Include="BFActor.cpp">
+    <ClCompile Include="BFMesh.cpp">
+      <Filter>源文件\Engine\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="BFGeometry.cpp">
       <Filter>源文件\Engine\Common</Filter>
     </ClCompile>
   </ItemGroup>

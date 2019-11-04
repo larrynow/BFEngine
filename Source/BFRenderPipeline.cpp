@@ -111,6 +111,8 @@ void IBFRenderPipeline::Clip_Triangles(std::vector<UINT>* const pIB)
 	UINT i = 0;
 	while (i< m_pIB_ClipSpace_Clipped->size()-2)
 	{
+		if (m_pIB_ClipSpace_Clipped->empty())// All clip.
+			return;
 		UINT id1 = m_pIB_ClipSpace_Clipped->at(i);
 		UINT id2 = m_pIB_ClipSpace_Clipped->at(i+1);
 		UINT id3 = m_pIB_ClipSpace_Clipped->at(i+2);
@@ -147,6 +149,8 @@ void IBFRenderPipeline::Clip_Triangles(std::vector<UINT>* const pIB)
 
 void IBFRenderPipeline::RasterizeTriangles()
 {
+	if (m_pIB_ClipSpace_Clipped->empty())
+		return;
 	for (size_t i = 0; i < m_pIB_ClipSpace_Clipped->size()-2; i+=3)
 	{
 		Fragment outFrag;

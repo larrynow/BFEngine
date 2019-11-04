@@ -16,7 +16,7 @@ public:
 	{
 		mFunction_MakeDirections();// Change default rotations, need to renew directions.
 	};
-	~IBFCamera(){};
+	//~IBFCamera(){};
 
 	//////////////////////////////////////////////////////////////////
 	// Functions to change camera positions, don't need to change directions and rotations.

@@ -12,13 +12,14 @@ public:
 
 	// Add movement.
 	virtual void AddMovement(const VEC3& direction, float movement);
-	inline virtual void MoveForward() { AddMovement(mCamera.GetFront(), mMoveSpeed); };
-	inline virtual void MoveBack() { AddMovement(-mCamera.GetFront(), mMoveSpeed); };
-	inline virtual void MoveLeft() { AddMovement(-mCamera.GetRight(), mMoveSpeed); };
-	inline virtual void MoveRight() { AddMovement(mCamera.GetRight(), mMoveSpeed); };
-	inline virtual void MoveUp() { AddMovement(mCamera.GetUp(), mMoveSpeed); };
-	inline virtual void MoveDown() { AddMovement(-mCamera.GetUp(), mMoveSpeed); };
+	inline void MoveForward() { AddMovement(m_pCamera->GetFront(), mMoveSpeed); };
+	inline virtual void MoveBack() { AddMovement(-m_pCamera->GetFront(), mMoveSpeed); };
+	inline virtual void MoveLeft() { AddMovement(-m_pCamera->GetRight(), mMoveSpeed); };
+	inline virtual void MoveRight() { AddMovement(m_pCamera->GetRight(), mMoveSpeed); };
+	inline virtual void MoveUp() { AddMovement(m_pCamera->GetUp(), mMoveSpeed); };
+	inline virtual void MoveDown() { AddMovement(-m_pCamera->GetUp(), mMoveSpeed); };
 
+	inline IBFCamera* GetCamera() { return m_pCamera; };
 	// Turning movement.
 	//inline virtual void Turn() {};
 
@@ -37,7 +38,7 @@ private:
 	/////////////////////////////////////
 	// Actor components.
 
-	IBFCamera mCamera;
+	IBFCamera* m_pCamera;
 
 	//Mesh.
 };

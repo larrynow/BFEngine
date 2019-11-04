@@ -1,21 +1,20 @@
 #include"BFDeviceRenderer.h"
 
-void IBFDeviceRenderer::Init(UINT bufferWidth, UINT bufferHeight)
+void IBFDeviceRenderer::Init(UINT bufferWidth, UINT bufferHeight, IBFCamera* camera)
 {
 	/* 
 	* First initialize display devices,
-	* include set output,
-	* create a output buffer...
-	* implemented in child class DeviceRendererPlatform. 
-	*
-	* Function_InitDisplayDevice();
+	* implemented in child class DeviceRendererPlatform.
+	* Then set up an output buffer for rendering,
+	* a camera for view point.
+	* A input callback setting is also need before DeviceRenderer init.
 	*/
 
 	mBufferWidth = bufferWidth;
 	mBufferHeight = bufferHeight;
 	mBufferSize = bufferWidth * bufferHeight;
 
-	m_pCamera = new IBFCamera();
+	m_pCamera = camera;
 
 	// Create buffers;
 	m_pZBuffer = new std::vector<float>(mBufferSize);

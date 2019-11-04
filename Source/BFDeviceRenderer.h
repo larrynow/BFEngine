@@ -3,6 +3,9 @@
 #define BFDEVICERENDERER
 
 #include"BFRenderPipeline.h"
+#include<unordered_map>
+#include<queue>
+#include<functional>
 
 /*
 * The device renderer interface, implemented in terms of IBFRenderPipeline.
@@ -17,7 +20,7 @@ public:
 
 	~IBFDeviceRenderer() {};
 
-	virtual void Init(UINT bufferWidth, UINT bufferHeight);
+	virtual void Init(UINT bufferWidth, UINT bufferHeight, IBFCamera* camera);
 
 	void Clear(BFBitFiled mask = BF_CLEAR_ALL);
 

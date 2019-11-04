@@ -9,9 +9,7 @@ IBFDeviceRendererWin32::~IBFDeviceRendererWin32()
 {
 }
 
-
-
-void IBFDeviceRendererWin32::Init(UINT bufferWidth, UINT bufferHeight)
+void IBFDeviceRendererWin32::Init(UINT bufferWidth, UINT bufferHeight, IBFCamera* camera)
 {
 	////////////////////////////////
 	// Initialize window.
@@ -73,7 +71,11 @@ void IBFDeviceRendererWin32::Init(UINT bufferWidth, UINT bufferHeight)
 
 	ShowWindow(hWindowHandle, SW_NORMAL);
 
-	IBFDeviceRenderer::Init(bufferWidth, bufferHeight);
+	ImmDisableIME(0);// Disable IME.
+	//memset(screen_keys, 0, sizeof(int) * 512);
+	screen_dispatch();// Deal with message before rendering.
+
+	IBFDeviceRenderer::Init(bufferWidth, bufferHeight, camera);
 }
 
 void IBFDeviceRendererWin32::Display()
@@ -85,6 +87,8 @@ void IBFDeviceRendererWin32::Display()
 	HDC hCurrentDC = GetDC(m_hWindowHandle);
 	BitBlt(hCurrentDC, 0, 0, 800, 600, m_hScreenDC, 0, 0, SRCCOPY);
 	ReleaseDC(m_hWindowHandle, hCurrentDC);
+
+	screen_dispatch();// Waitting next message.
 }
 
 void IBFDeviceRendererWin32::DrawTest(int J)
@@ -99,4 +103,13 @@ void IBFDeviceRendererWin32::DrawTest(int J)
 		}
 	}
 	
+}
+
+void screen_dispatch(void) {
+	MSG msg;
+	while (1) {
+		if (!PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) break;
+		if (!GetMessage(&msg, NULL, 0, 0)) break;
+		DispatchMessage(&msg);
+	}
 }

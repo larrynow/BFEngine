@@ -19,8 +19,20 @@ int main()
 	resourceManager->ImportTexture_BMP("../Asset/awesomeface.bmp", cubeTexture);
 	cubeMesh->BindTexture(cubeTexture);
 
+	// Note, the BindInput should be excuted in actor(or controller) class.
 	content->RegisterInput(BFInput::KEY_W, "forward");
 	content->BindInput("forward", std::bind(&ABFActor::MoveForward, content->m_pControlledActor));
+	content->RegisterInput(BFInput::KEY_S, "backward");
+	content->BindInput("backward", std::bind(&ABFActor::MoveBack, content->m_pControlledActor));
+	content->RegisterInput(BFInput::KEY_A, "left");
+	content->BindInput("left", std::bind(&ABFActor::MoveLeft, content->m_pControlledActor));
+	content->RegisterInput(BFInput::KEY_D, "right");
+	content->BindInput("right", std::bind(&ABFActor::MoveRight, content->m_pControlledActor));
+	//content->RegisterInput(BFInput::KEY_D, "up");
+	//content->BindInput("up", std::bind(&ABFActor::MoveUp, content->m_pControlledActor));
+	//content->RegisterInput(BFInput::KEY_D, "down");
+	//content->BindInput("down", std::bind(&ABFActor::MoveDown, content->m_pControlledActor));
+
 	//BFResourceManager resourceManager;
 	////Mesh* rockMesh = new Mesh();
 	////Texture* rockTexture = new Texture();
@@ -70,14 +82,24 @@ int main()
 		
 		// Input.
 		//std::cout << screen_keys[87] << std::endl;
-		if (BFContent::screen_keys[87]==1)
+		for (auto it = content->input_name_map.begin(); it != content->input_name_map.end(); ++it)
 		{
-			//std::cout << BFContent::screen_keys[87] << std::endl;
-
-			auto input = content->input_name_map[BFInput::KEY_W];
-			auto op = content->input_op_map.at(input);
-			op();
+			auto key = (*it).first;
+			if (BFContent::screen_keys[int(key) - int(BFInput::KEY_A)+65] == 1)
+			{
+				auto input = (*it).second;
+				auto op = content->input_op_map.at(input);
+				op();
+			}
 		}
+		//if (BFContent::screen_keys[87]==1)
+		//{
+		//	//std::cout << BFContent::screen_keys[87] << std::endl;
+
+		//	auto input = content->input_name_map[BFInput::KEY_W];
+		//	auto op = content->input_op_map.at(input);
+		//	op();
+		//}
 
 		cubeMesh->RotateWithY(1.f);
 		renderer->RenderMesh(cubeMesh);

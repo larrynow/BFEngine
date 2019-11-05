@@ -125,6 +125,7 @@ enum class BFDevice_t
 
 enum class BFInput 
 {
+	// A transfer from VK to BFInput::KEY.
 
 	// Keyboard inputs.
 	KEY_A, KEY_B, KEY_C, KEY_D, KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, 

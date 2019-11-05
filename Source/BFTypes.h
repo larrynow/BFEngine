@@ -98,6 +98,22 @@ struct DirectionLight : public Light
 	VEC3 Direction;
 };
 
+struct PointLight : public Light
+{
+	PointLight(const COLOR3& aColor, const COLOR3& dColor, const COLOR3& sColor, const VEC3& position,
+		float constant, float linear, float quadratic) : Light(aColor, dColor, sColor), Position(position), Constant(constant), Linear(linear), Quadratic(quadratic) {};
+	PointLight(const VEC3& position, float constant, float linear, float quadratic) : Light(), Position(position),
+		Constant(constant), Linear(linear), Quadratic(quadratic) {};
+	PointLight(const VEC3& position) : Light(), Position(position), Constant(1.f), Linear(.35f), Quadratic(.44f) {};
+	PointLight() : PointLight({ 0.f, 10.f, 0.f }) {};
+
+	VEC3 Position;
+	// For attenuation.
+	float Constant;
+	float Linear;
+	float Quadratic;
+};
+
 struct Material
 {
 

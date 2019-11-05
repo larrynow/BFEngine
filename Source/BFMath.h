@@ -133,6 +133,15 @@ namespace BFMath
 			return VEC3(x*_vec.x, y*_vec.y, z*_vec.z);
 		}
 
+		VEC3& operator*=(const float scaleFactor)
+		{
+			x *= scaleFactor;
+			y *= scaleFactor;
+			z *= scaleFactor;
+
+			return *this;
+		}
+
 		VEC3 operator/(const float scaleFactor) const
 		{
 			return VEC3(x / scaleFactor, y / scaleFactor, z / scaleFactor);

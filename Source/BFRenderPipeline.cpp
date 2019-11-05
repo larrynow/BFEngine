@@ -324,17 +324,34 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 			auto reflectDir = Reflect(lightDir, inFrag.Normal);
 			float spec = (-viewDir).CosineValue(reflectDir);
 
-			COLOR3 ambient = pLight->AmbientColor * texSampleColor;
-			COLOR3 diffuse = pLight->DiffuseColor * diff *texSampleColor;// Should multiply by a material intensity.
-			COLOR3 specular = pLight->SpecluarColor * spec * texSampleColor;
+			COLOR3 ambient = pDLight->AmbientColor * texSampleColor;
+			COLOR3 diffuse = pDLight->DiffuseColor * diff *texSampleColor;// Should multiply by a material intensity.
+			COLOR3 specular = pDLight->SpecluarColor * spec * texSampleColor;
 
 			outColor += (ambient + diffuse + specular);
 			//std::cout << outColor << std::endl;
 		}
-		/*else if(auto p)
+		else if(auto pPLight = dynamic_cast<PointLight*>(pLight))
 		{
+			auto lightDir = inFrag.FragPos - pPLight->Position;
+			float diff = max(inFrag.Normal.CosineValue(-lightDir), 0.f);
+			auto reflectDir = Reflect(lightDir, inFrag.Normal);
+			float spec = (-viewDir).CosineValue(reflectDir);
 
-		}*/
+			COLOR3 ambient = pPLight->AmbientColor * texSampleColor;
+			COLOR3 diffuse = pPLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
+			COLOR3 specular = pPLight->SpecluarColor * spec * texSampleColor;
+
+			// Attenuation.
+			float distance = (inFrag.FragPos - pPLight->Position).Length();
+			float attenuation = 1.f / (pPLight->Constant + pPLight->Linear * distance
+				+ pPLight->Quadratic * distance * distance);
+			ambient *= attenuation;
+			diffuse *= attenuation;
+			specular *= attenuation;
+
+			outColor += (ambient + diffuse + specular);
+		}
 	}
 
 	ClampColor(outColor);

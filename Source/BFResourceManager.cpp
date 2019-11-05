@@ -68,7 +68,7 @@ bool BFResourceManager::ImportFile_OBJ(const std::string& pFilePath, std::vector
 				for (auto& c : str) { if (c == '/')c = ' '; };
 				tmpStream << str;
 				tmpStream >> v.vertexID >> v.texCoordID >> v.vertexNormalID;
-				--v;// Start with 1 to 0.
+				//--v;// Start with 1 to 0.
 
 				bool isExist = false;
 				UINT existedVertexIndex = 0;
@@ -103,9 +103,10 @@ bool BFResourceManager::ImportFile_OBJ(const std::string& pFilePath, std::vector
 	{
 		Vertex vertex;
 		auto vInfo = vertexInfoList.at(i);// Get infos.
-		vertex.Pos = pointList.at(vInfo.vertexID);
-		vertex.Texcoord = texCoordList.at(vInfo.texCoordID);
-		vertex.Normal = normalList.at(vInfo.vertexNormalID);
+		if (vInfo.vertexID == 0 || vInfo.texCoordID == 0 || vInfo.vertexNormalID == 0)continue;// For safety.
+		vertex.Pos = pointList.at(vInfo.vertexID-1);
+		vertex.Texcoord = texCoordList.at(vInfo.texCoordID-1);
+		vertex.Normal = normalList.at(vInfo.vertexNormalID-1);
 		vertex.Color = COLOR4(1.0f);
 
 		rVertexBuffer.at(i) = vertex;

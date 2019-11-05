@@ -453,8 +453,8 @@ inline VEC3 IBFRenderPipeline::mFunction_SampleTexture(float x, float y)
 
 	UINT pixelX, pixelY;
 
-	pixelX = (UINT)abs((m_pTexture->Width-1) * x)/*float(x - UINT(x)))*/;// First get fraction, then get trans to [0, 1)*width -> [0, width-1]..
-	pixelY = (UINT)abs((m_pTexture->Height-1) * y)/*float(y - UINT(y)))*/;
+	pixelX = (UINT)abs((m_pTexture->Width - 1) * (x - UINT(x)));
+	pixelY = (UINT)abs((m_pTexture->Height - 1) * (y - UINT(y)));
 
 	return m_pTexture->GetPixel(pixelX, pixelY);
 }

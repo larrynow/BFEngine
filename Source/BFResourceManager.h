@@ -55,18 +55,17 @@ public:
 	BFResourceManager();
 	~BFResourceManager();
 
-	bool ImportFile_OBJ(const std::string& filePath, std::vector<Vertex>& rVertexBuffer, std::vector<UINT>& rIndexBuffer);
 	inline bool ImportMesh_OBJ(const std::string& filePath, Mesh* mesh) { return ImportFile_OBJ(filePath, *mesh->m_pVertexBuffer, *mesh->m_pIndexBuffer); };
-
-	bool ImportFile_PPM(const std::string& filePath, UINT& outWidth, UINT& outHeight, std::vector<COLOR3>& outColorBuffer);
 	inline bool ImportTexture_PPM(const std::string& filePath, Texture* tex) { return ImportFile_PPM(filePath, tex->Width, tex->Height, *tex->pColorBuffer); };
-
-	bool ImportFile_BMP(const std::string& filePath, UINT& outWidth, UINT& outHeight, std::vector<COLOR3>& outColorBuffer);
 	inline bool ImportTexture_BMP(const std::string& filePath, Texture* tex) { return ImportFile_BMP(filePath, tex->Width, tex->Height, *tex->pColorBuffer); };
 
 	//bool ImportFile_PNG(const std::string& filePath, UINT& outWidth, UINT& outHeight, std::vector<COLOR3>& outColorBuffer);
 
 private:
+
+	bool ImportFile_OBJ(const std::string& filePath, std::vector<Vertex>& rVertexBuffer, std::vector<UINT>& rIndexBuffer);
+	bool ImportFile_PPM(const std::string& filePath, UINT& outWidth, UINT& outHeight, std::vector<COLOR3>& outColorBuffer);
+	bool ImportFile_BMP(const std::string& filePath, UINT& outWidth, UINT& outHeight, std::vector<COLOR3>& outColorBuffer);
 
 	//std::vector<Vertex>* m_pVB;
 	//std::vector<UINT>* m_pIB;

@@ -19,6 +19,13 @@ int main()
 	resourceManager->ImportTexture_BMP("../Asset/awesomeface.bmp", cubeTexture);
 	cubeMesh->BindTexture(cubeTexture);
 
+	Texture* coolTexture = new Texture();
+	Mesh* cuteMesh = new Mesh();
+	resourceManager->ImportMesh_OBJ("../Asset/nanosuit.obj", cuteMesh);
+	//resourceManager->ImportTexture_PPM("../Asset/rock.ppm", coolTexture);
+	resourceManager->ImportTexture_BMP("../Asset/car.bmp", coolTexture);
+	cuteMesh->BindTexture(coolTexture);
+
 	BFContent::m_pLights[0] = new DirectionLight({0.f, 0.f, 1.f});
 
 	// Note, the BindInput should be excuted in actor(or controller) class.
@@ -103,10 +110,11 @@ int main()
 		//	op();
 		//}
 
-		cubeMesh->RotateWithY(1.f);
-		renderer->RenderMesh(cubeMesh);
+		/*cubeMesh->RotateWithY(1.f);
+		renderer->RenderMesh(cubeMesh);*/
+		cuteMesh->RotateWithY(1.f);
 
-
+		renderer->RenderMesh(cuteMesh);
 
 		renderer->Display();
 		

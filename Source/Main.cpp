@@ -19,6 +19,8 @@ int main()
 	resourceManager->ImportTexture_BMP("../Asset/awesomeface.bmp", cubeTexture);
 	cubeMesh->BindTexture(cubeTexture);
 
+	BFContent::m_pLights[0] = new DirectionLight({0.f, 0.f, 1.f});
+
 	// Note, the BindInput should be excuted in actor(or controller) class.
 	content->RegisterInput(BFInput::KEY_W, "forward");
 	content->BindInput("forward", std::bind(&ABFActor::MoveForward, content->m_pControlledActor));

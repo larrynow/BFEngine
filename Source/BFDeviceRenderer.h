@@ -18,7 +18,7 @@ public:
 
 	IBFDeviceRenderer() {};
 
-	~IBFDeviceRenderer() {};
+	virtual ~IBFDeviceRenderer() {};
 
 	virtual void Init(UINT bufferWidth, UINT bufferHeight, IBFCamera* camera);
 

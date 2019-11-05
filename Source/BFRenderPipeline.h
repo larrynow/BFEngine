@@ -74,9 +74,7 @@ private:
 	MAT4 mProjMatrix;
 	VEC3 mCameraPos;
 
-	static const UINT MAXLIGHTNUM = 8;
 	bool bLightingEnable;
-	Light mLights[MAXLIGHTNUM];
 
 	Material mMaterial;
 	const Texture* m_pTexture;

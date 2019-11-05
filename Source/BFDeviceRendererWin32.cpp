@@ -56,7 +56,7 @@ void IBFDeviceRendererWin32::Init(UINT bufferWidth, UINT bufferHeight, IBFCamera
 	
 	// Configure bitmap info.
 	BITMAPINFO bi = { {sizeof(BITMAPINFOHEADER), bufferWidth, bufferHeight, 1, 24, BI_RGB,
-		bufferWidth * bufferHeight * 3, 0, 0, 0, 0 } };// 24 bits color, 3 channels RGB for 3 byte.
+		(LONG)(bufferWidth * bufferHeight * 3), 0, 0, 0, 0 } };// 24 bits color, 3 channels RGB for 3 byte.
 	// Color bits : /R:8/G:8/B:8.
 
 	// Create bitmap.
@@ -73,7 +73,7 @@ void IBFDeviceRendererWin32::Init(UINT bufferWidth, UINT bufferHeight, IBFCamera
 	hBmpOld = (HBITMAP)SelectObject(m_hScreenDC, hBmpNew);// Select new bmp into screenDC replace old bmp.
 
 	// Adjust window shape, position.
-	RECT rect = { 0, 0, bufferWidth, bufferHeight };
+	RECT rect = { 0, 0, (LONG)bufferWidth, (LONG)bufferHeight };
 	AdjustWindowRect(&rect, GetWindowLong(hWindowHandle, GWL_STYLE), 0);
 	int wx, wy, sx, sy;
 	wx = rect.right - rect.left;

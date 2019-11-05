@@ -37,7 +37,7 @@ struct Vertex_VSO
 	VEC4 ClipPos;// Positiobn in clip space.
 	VEC4 Color;
 	VEC2 Texcoord;
-	//float ViewZ;// A view space z value to be used in interplotation.// USELESS.
+	VEC3 Normal;
 	// Normal only need in lighting pocess.
 };
 
@@ -47,6 +47,8 @@ struct Fragment
 	UINT PixelY;
 	VEC4 Color;
 	VEC2 Texcoord;
+	VEC3 FragPos;
+	VEC3 Normal;
 };
 
 struct RenderBuffer
@@ -75,16 +77,24 @@ struct RenderData
 
 struct Light
 {
+	Light(const COLOR3& aColor, const COLOR3& dColor, const COLOR3& sColor) : AmbientColor(aColor), DiffuseColor(dColor), SpecluarColor(sColor){};
+	Light() :Light({ .2f }, { .5f }, { 1.f }) {};
+	
+	virtual ~Light() {};
+
 	COLOR3 AmbientColor;
 	COLOR3 DiffuseColor;
 	COLOR3 SpecluarColor;
 	
-	float DiffuseIntensity;
-	float SpecularIntensity;
 };
 
 struct DirectionLight : public Light
 {
+	DirectionLight(const COLOR3& aColor, const COLOR3& dColor, const COLOR3& sColor, const VEC3& direction) : Light(aColor, dColor, sColor), Direction(direction) {};
+	DirectionLight() : Light(), Direction({ -1.f, -1.f, -1.f }) {};
+	DirectionLight(const VEC3& direction) : Light(), Direction(direction) {};
+	~DirectionLight() {};
+
 	VEC3 Direction;
 };
 

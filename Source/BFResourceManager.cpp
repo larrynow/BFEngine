@@ -192,7 +192,7 @@ bool BFResourceManager::ImportFile_BMP(const std::string & filePath, UINT & outW
 	outColorBuffer.resize(outHeight*outWidth);
 	// Save(maybe in row flipped order).
 	for (int i = outHeight - 1; i >= 0; --i)
-		for (int j = 0; j < outWidth; ++j)
+		for (int j = 0; j < int(outWidth); ++j)
 		{
 			int r, g, b;
 

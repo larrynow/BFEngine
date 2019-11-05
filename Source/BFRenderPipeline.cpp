@@ -1,4 +1,5 @@
 #include "BFRenderPipeline.h"
+#include"BFContent.h"
 
 bool IBFRenderPipeline::Init(RenderBuffer & initBuffers)
 {
@@ -99,6 +100,7 @@ void IBFRenderPipeline::VertexShader(const Vertex & vertex)
 	outVertex.ClipPos = pos;
 	outVertex.Color = vertex.Color;
 	outVertex.Texcoord = vertex.Texcoord;
+	outVertex.Normal = norm_World.xyz();
 
 	m_pVB_ClipSpace->push_back(outVertex);
 }
@@ -247,6 +249,14 @@ void IBFRenderPipeline::RasterizeTriangles()
 						t * v3.Texcoord / v3.ClipPos.w +
 						(1 - t - s) * v1.Texcoord / v1.ClipPos.w) / one_div_z;
 
+					outFrag.FragPos = ((s * v2.ClipPos / v2.ClipPos.w +
+						t * v3.ClipPos / v3.ClipPos.w +
+						(1 - t - s) * v1.ClipPos / v1.ClipPos.w) / one_div_z).xyz();
+
+					outFrag.Normal = (s * v2.Normal / v2.ClipPos.w +
+						t * v3.Normal / v3.ClipPos.w +
+						(1 - t - s) * v1.Normal / v1.ClipPos.w) / one_div_z;
+
 					m_pFB_Rasterized->push_back(outFrag);
 				}
 			}
@@ -300,8 +310,36 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 {
 	COLOR3 outColor;
 	COLOR3 texSampleColor = mFunction_SampleTexture(inFrag.Texcoord.x, inFrag.Texcoord.y);
-	outColor = inFrag.Color.xyz() * texSampleColor;
+	//outColor = inFrag.Color.xyz() * texSampleColor;
+
+	// For lights.
+	auto viewDir = inFrag.FragPos - mCameraPos;
+	for (auto pLight : BFContent::m_pLights)
+	{
+		if (pLight == nullptr) break;
+		if (auto pDLight = dynamic_cast<DirectionLight*>(pLight))
+		{
+			auto lightDir = pDLight->Direction;
+			float diff = max(inFrag.Normal.CosineValue(-lightDir), 0.f);
+			auto reflectDir = Reflect(lightDir, inFrag.Normal);
+			float spec = (-viewDir).CosineValue(reflectDir);
+
+			COLOR3 ambient = pLight->AmbientColor * texSampleColor;
+			COLOR3 diffuse = pLight->DiffuseColor * diff *texSampleColor;// Should multiply by a material intensity.
+			COLOR3 specular = pLight->SpecluarColor * spec * texSampleColor;
+
+			outColor += (ambient + diffuse + specular);
+			//std::cout << outColor << std::endl;
+		}
+		/*else if(auto p)
+		{
+
+		}*/
+	}
+
+	ClampColor(outColor);
 	m_pColorBuffer->at(inFrag.PixelY * mBufferWidth + inFrag.PixelX) = outColor;
+
 }
 
 bool IBFRenderPipeline::mFunction_HorizontalIntersect(float y, const VEC2 & v1, const VEC2 & v2, const VEC2 & v3, UINT & outX1, UINT & outX2)
@@ -415,8 +453,8 @@ inline VEC3 IBFRenderPipeline::mFunction_SampleTexture(float x, float y)
 
 	UINT pixelX, pixelY;
 
-	pixelX = abs((m_pTexture->Width-1) * x)/*float(x - UINT(x)))*/;// First get fraction, then get trans to [0, 1)*width -> [0, width-1]..
-	pixelY = abs((m_pTexture->Height-1) * y)/*float(y - UINT(y)))*/;
+	pixelX = (UINT)abs((m_pTexture->Width-1) * x)/*float(x - UINT(x)))*/;// First get fraction, then get trans to [0, 1)*width -> [0, width-1]..
+	pixelY = (UINT)abs((m_pTexture->Height-1) * y)/*float(y - UINT(y)))*/;
 
 	return m_pTexture->GetPixel(pixelX, pixelY);
 }

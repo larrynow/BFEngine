@@ -76,21 +76,17 @@ namespace BFMath
 			return sqrtf(x*x + y * y + z * z);
 		}
 
-		VEC3& Normalize()
+		VEC3 Normalize() const
 		{
 			float length = this->Length();
 			if (length == 0)
 			{
-				x = y = z = 0.0f;
+				return VEC3(0, 0, 0);
 			}
 			else
 			{
-				x /= length;
-				y /= length;
-				z /= length;
+				return VEC3(x/length, y/length, z/length);
 			}
-
-			return *this;
 		}
 
 		bool operator==(const VEC3& _vec) const
@@ -145,6 +141,16 @@ namespace BFMath
 		VEC3 CrossProduct(const VEC3& _vec) const
 		{
 			return VEC3(_vec.z*y-_vec.y*z, _vec.x*z - _vec.z*x, _vec.y*x - _vec.x*y);
+		}
+
+		float DotProduct(const VEC3& _vec) const
+		{
+			return _vec.x*x + _vec.y*y + _vec.z*z;
+		}
+
+		float CosineValue(const VEC3& _vec) const
+		{
+			return (*this).Normalize().DotProduct(_vec.Normalize());
 		}
 
 		friend std::ostream& operator<<(std::ostream& os, const VEC3 _vec)
@@ -346,10 +352,29 @@ namespace BFMath
 	};
 
 	inline float Clamp(float val, float min, float max) { if (val > max)return max; else if (val < min) return min; else return val; };
+	inline float Clamp(float val, UINT min, UINT max) { return Clamp(val, float(min), float(max)); };
 
 	inline float Lerp(const float start, const float end, const float fraction) { return start + (end - start)*fraction; };
-
 	inline VEC2 Lerp(const VEC2& start, const VEC2& end, float fraction) { return VEC2(Lerp(start.x, end.x, fraction), Lerp(start.y, end.y, fraction)); };
+
+	inline VEC3 Reflect(const VEC3& direction, const VEC3& normal) 
+	{ 
+		// Input can be unNormalized vectors.
+		auto I = direction.Normalize();
+		auto N = normal.Normalize();
+		auto S = -I.DotProduct(N) * N;
+		auto P = I + S;
+		auto R = 2 * P - I;
+
+		return R;
+	};
+
+	inline void ClampColor(VEC3& color)
+	{
+		color.x = Clamp(color.x, 0.f, 1.0f);
+		color.y = Clamp(color.y, 0.f, 1.0f);
+		color.z = Clamp(color.z, 0.f, 1.0f);
+	}
 
 	inline MAT4 GetPerspectiveMatrix(const float viewRadianY, const float aspectRatio, const float nearPlane, const float farPlane)
 	{

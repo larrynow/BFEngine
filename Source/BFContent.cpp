@@ -2,6 +2,8 @@
 
 int BFContent::screen_keys[512] = { 0 };
 int BFContent::screen_exit = 0;
+Light* BFContent::m_pLights[BFContent::MAXLIGHTNUM] = {nullptr};
+
 
 void BFContent::StartUp(BFDevice_t content_device, UINT screenWidth, UINT screenHeight)
 {

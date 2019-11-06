@@ -27,7 +27,7 @@ int main()
 	cuteMesh->BindTexture(coolTexture);
 
 	//BFContent::m_pLights[0] = new DirectionLight({0.f, 0.f, 1.f});
-	BFContent::m_pLights[0] = new PointLight({0.f, 4.f, -1.f});
+	BFContent::m_pLights[0] = new SpotLight(VEC3{0.f, 0.f, -10.f});
 
 	// Note, the BindInput should be excuted in actor(or controller) class.
 	content->RegisterInput(BFInput::KEY_W, "forward");

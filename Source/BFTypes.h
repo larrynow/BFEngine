@@ -38,6 +38,7 @@ struct Vertex_VSO
 	VEC4 Color;
 	VEC2 Texcoord;
 	VEC3 Normal;
+	VEC3 WordPos;
 	// Normal only need in lighting pocess.
 };
 
@@ -109,6 +110,33 @@ struct PointLight : public Light
 
 	VEC3 Position;
 	// For attenuation.
+	float Constant;
+	float Linear;
+	float Quadratic;
+};
+
+struct SpotLight : public Light
+{
+	SpotLight(const COLOR3& aColor, const COLOR3& dColor, const COLOR3& sColor, const VEC3& position,
+		const VEC3& direction, float innerCutOff, float outterCutOff, float constant, float linear, float quadratic) : 
+		Light(aColor, dColor, sColor), Position(position), Direction(direction),
+		InnerCutOffRadian(innerCutOff), OutterCutOffRadian(outterCutOff), 
+		Epsilon(cos(innerCutOff)-cos(outterCutOff)), OutterTheta(cos(outterCutOff)),
+		Constant(constant), Linear(linear), Quadratic(quadratic){};
+	SpotLight(const VEC3& position, const VEC3& direction, float innerCutOff, float outterCutOff) : Light(),
+		Position(position), Direction(direction), InnerCutOffRadian(innerCutOff), OutterCutOffRadian(outterCutOff),
+		Epsilon(cos(innerCutOff) - cos(outterCutOff)), OutterTheta(cos(outterCutOff)),
+		Constant(1.f), Linear(.35f), Quadratic(.44f){};
+	SpotLight(const VEC3& position) : SpotLight(position, { 0.f, 0.f, 1.f }, PI/12, PI/6) {};
+	SpotLight() :SpotLight({ 0.f, 0.f, -1.f }, { 0.f, 0.f, 1.f }, PI / 12, PI/6) {};
+
+	VEC3 Position;
+	VEC3 Direction;
+	float InnerCutOffRadian;
+	float OutterCutOffRadian;
+	float Epsilon;
+	float OutterTheta;
+
 	float Constant;
 	float Linear;
 	float Quadratic;

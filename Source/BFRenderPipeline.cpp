@@ -84,6 +84,9 @@ void IBFRenderPipeline::VertexShader(const Vertex & vertex)
 	// Clip space position.
 	VEC4 pos(vertex.Pos, 1.0f);// w = 1.0f.
 	pos = mWorldMatrix * pos;
+
+	outVertex.WordPos = pos.xyz();// Save world position for fragment shader.
+
 	pos = mViewMatrix * pos;
 	pos = mProjMatrix * pos;
 
@@ -249,9 +252,9 @@ void IBFRenderPipeline::RasterizeTriangles()
 						t * v3.Texcoord / v3.ClipPos.w +
 						(1 - t - s) * v1.Texcoord / v1.ClipPos.w) / one_div_z;
 
-					outFrag.FragPos = ((s * v2.ClipPos / v2.ClipPos.w +
-						t * v3.ClipPos / v3.ClipPos.w +
-						(1 - t - s) * v1.ClipPos / v1.ClipPos.w) / one_div_z).xyz();
+					outFrag.FragPos = (s * v2.WordPos / v2.ClipPos.w +
+						t * v3.WordPos / v3.ClipPos.w +
+						(1 - t - s) * v1.WordPos / v1.ClipPos.w) / one_div_z;
 
 					outFrag.Normal = (s * v2.Normal / v2.ClipPos.w +
 						t * v3.Normal / v3.ClipPos.w +
@@ -351,6 +354,23 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 			specular *= attenuation;
 
 			outColor += (ambient + diffuse + specular);
+		}
+		else if (auto pSLight = dynamic_cast<SpotLight*>(pLight))
+		{
+			auto lightDir = inFrag.FragPos - pSLight->Position;
+			float theta = lightDir.CosineValue(pSLight->Direction);
+			float intensity = Clamp((theta - pSLight->OutterTheta) / pSLight->Epsilon, 0.f, 1.f);
+
+			float diff = max(inFrag.Normal.CosineValue(-lightDir), 0.f);
+			auto reflectDir = Reflect(lightDir, inFrag.Normal);
+			float spec = (-viewDir).CosineValue(reflectDir);
+
+			COLOR3 ambient = pSLight->AmbientColor * texSampleColor;
+			COLOR3 diffuse = pSLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
+			COLOR3 specular = pSLight->SpecluarColor * spec * texSampleColor;
+
+			outColor += (ambient + diffuse * intensity + specular * intensity);
+			
 		}
 	}
 

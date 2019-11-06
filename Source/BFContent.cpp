@@ -34,4 +34,32 @@ void BFContent::ControllActor(ABFActor & actor)
 	m_pControlledActor = &actor;
 }
 
+// Windows inputMap, from VK to BFInput.
+int BFContent::MapKey(BFInput input)
+{
+	int ret = -1;
+	if (input >= BFInput::KEY_A && input <= BFInput::KEY_Z)
+	{
+		//  Key A to Z is ascii code of 'A' to 'Z'.
+		ret = int(input) - int(BFInput::KEY_A) + 65;
+	}
+	else
+	{
+		switch (input)
+		{
+		case(BFInput::KEY_SPACE):
+			ret = VK_SPACE;
+			break;
+		case(BFInput::KEY_SHIFT):
+			ret = VK_SHIFT;
+			break;
+		case(BFInput::KEY_CTRL):
+			ret = VK_CONTROL;
+			break;
+		default:
+			break;
+		}
+	}
 
+	return ret;
+}

@@ -51,6 +51,11 @@ public:
 	static int screen_keys[512];// Static input keys.
 	static int screen_exit;
 
+	// A transfer from BFInput to key id.
+	int static MapKey(BFInput input);
+
+	inline static bool ShouldFinish() { return screen_exit == 1 || screen_keys[VK_ESCAPE] == 1; };
+
 	///////////////////////////////////////////////////////////
 	// Lights.
 

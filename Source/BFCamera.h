@@ -8,7 +8,7 @@ class IBFCamera
 {
 public:
 	IBFCamera() : mCameraPos(0.f, 0.f, -200.f), pitch(0.f), yaw(0.f), roll(0.f), bIsPitchRestricted(true), 
-		mCameraFront(0.f, 0.f, 1.0f), mCameraRight(1.f, 0.f, 0.f), mCameraUp(0.f, 0.f, 1.f),
+		mCameraFront(0.f, 0.f, 1.0f), mCameraRight(1.f, 0.f, 0.f), mCameraUp(0.f, 1.f, 0.f),
 		mFOV(45.f), mNearPlane(0.1f), mFarPlane(1000.f)	{};
 	IBFCamera(const VEC3& _pos) : IBFCamera() { mCameraPos = _pos; };// Use default directions.
 	IBFCamera(const VEC3& _pos, const VEC3& _rotations, const float _FOV, const float _nearPlane, const float _farPlane) :

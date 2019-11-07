@@ -63,6 +63,9 @@
     <ClInclude Include="BFMesh.h">
       <Filter>源文件\Engine\Common</Filter>
     </ClInclude>
+    <ClInclude Include="BFThreadPool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BFRenderPipeline.cpp">
@@ -94,6 +97,9 @@
     </ClCompile>
     <ClCompile Include="BFGeometry.cpp">
       <Filter>源文件\Engine\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="BFThreadPool.cpp">
+      <Filter>头文件</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

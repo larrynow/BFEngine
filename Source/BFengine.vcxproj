@@ -125,6 +125,7 @@
     <ClInclude Include="BFResourceManager.h" />
     <ClInclude Include="BFRenderPipeline.h" />
     <ClInclude Include="BFDeviceRenderer.h" />
+    <ClInclude Include="BFThreadPool.h" />
     <ClInclude Include="BFTypes.h" />
     <ClInclude Include="BFCamera.h" />
     <ClInclude Include="BFDeviceRendererWin32.h" />
@@ -139,6 +140,7 @@
     <ClCompile Include="BFRenderPipeline.cpp" />
     <ClCompile Include="BFDeviceRenderer.cpp" />
     <ClCompile Include="BFDeviceRendererWin32.cpp" />
+    <ClCompile Include="BFThreadPool.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

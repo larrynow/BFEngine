@@ -1,5 +1,6 @@
 #include "BFRenderPipeline.h"
 #include"BFContent.h"
+#include"BFThreadPool.h"
 
 bool IBFRenderPipeline::Init(RenderBuffer & initBuffers)
 {
@@ -71,10 +72,18 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 
 	////////////////////////////////////////////////
 	// Pixel Shader.
-	for (auto& fragment : *m_pFB_Rasterized)
+	BFThreadPool thread_pool(10);
+	BFThreadPool::TaskId = 0;
+	std::vector<BFTask> tasks;
+
+	for (Fragment& fragment : *m_pFB_Rasterized)
 	{
-		FragmentShader_DrawTriangles(fragment);
+		//FragmentShader_DrawTriangles(fragment);
+		//class Fragment;
+		tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader_DrawTriangles, this, std::ref(fragment)));
 	}
+
+	thread_pool.StartUp(tasks);
 }
 
 void IBFRenderPipeline::VertexShader(const Vertex & vertex)
@@ -320,7 +329,7 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 	for (auto pLight : BFContent::m_pLights)
 	{
 		if (pLight == nullptr) break;
-		if (auto pDLight = dynamic_cast<DirectionLight*>(pLight))
+		if (DirectionLight* pDLight = dynamic_cast<DirectionLight*>(pLight))
 		{
 			auto lightDir = pDLight->Direction;
 			float diff = max(inFrag.Normal.CosineValue(-lightDir), 0.f);
@@ -334,7 +343,7 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 			outColor += (ambient + diffuse + specular);
 			//std::cout << outColor << std::endl;
 		}
-		else if(auto pPLight = dynamic_cast<PointLight*>(pLight))
+		else if(PointLight* pPLight = dynamic_cast<PointLight*>(pLight))
 		{
 			auto lightDir = inFrag.FragPos - pPLight->Position;
 			float diff = max(inFrag.Normal.CosineValue(-lightDir), 0.f);
@@ -355,7 +364,7 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 
 			outColor += (ambient + diffuse + specular);
 		}
-		else if (auto pSLight = dynamic_cast<SpotLight*>(pLight))
+		else if (SpotLight* pSLight = dynamic_cast<SpotLight*>(pLight))
 		{
 			auto lightDir = inFrag.FragPos - pSLight->Position;
 			float theta = lightDir.CosineValue(pSLight->Direction);

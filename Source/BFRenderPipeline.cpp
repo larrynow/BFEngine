@@ -51,7 +51,7 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 
 	//////////////////////////////////////////////////
 	// Vertex shader.
-
+	auto t1 = timeGetTime();
 	auto VSRenderSize = offset + vertexCount > pVertexBuffer->size() ? pVertexBuffer->size() : offset + vertexCount;
 	for (size_t i = offset; i < VSRenderSize; ++i)
 	{
@@ -59,31 +59,41 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 
 		VertexShader(currVertex);
 	}
-
+	auto t2 = timeGetTime();
 	/////////////////////////////////////////////////
 	// Clipping.
 
 	Clip_Triangles(pIndexBuffer);
-
+	auto t3 = timeGetTime();
 	////////////////////////////////////////////////
 	// Rasterizing.
 
-	RasterizeTriangles();
-
+	RasterizeTriangles();// TODO : Now Rasterize takes most time.
+	auto t4 = timeGetTime();
 	////////////////////////////////////////////////
-	// Pixel Shader.
-	BFThreadPool thread_pool(10);
-	BFThreadPool::TaskId = 0;
-	std::vector<BFTask> tasks;
+	// Fragment Shader.
+	BFThreadPool thread_pool(8);
+	BFThreadPool::tasks.clear();
 
+	// Collect all tasks.
 	for (Fragment& fragment : *m_pFB_Rasterized)
 	{
-		//FragmentShader_DrawTriangles(fragment);
-		//class Fragment;
-		tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader_DrawTriangles, this, std::ref(fragment)));
+		BFThreadPool::tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader_DrawTriangles, this, std::ref(fragment)));
 	}
 
-	thread_pool.StartUp(tasks);
+	thread_pool.StartUp();// Start all threads then wait them all finish.
+
+	auto t5 = timeGetTime();
+
+	//for (Fragment& fragment : *m_pFB_Rasterized)
+	//{
+	//	FragmentShader_DrawTriangles(fragment);
+	//	//BFThreadPool::tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader_DrawTriangles, this, std::ref(fragment)));
+	//}
+	auto t6 = timeGetTime();
+
+	//std::cout << "vs : " << t2 - t1 << ", clip : " << t3 - t2 << ", Rasterize : " << t4 - t3 << ", FS : " << t5 - t4 << " : "<< t6 - t5 <<std::endl;
+
 }
 
 void IBFRenderPipeline::VertexShader(const Vertex & vertex)

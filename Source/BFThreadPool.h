@@ -4,73 +4,46 @@
 
 #include<functional>
 #include<thread>
-#include<mutex>
 #include<iostream>
 #include<vector>
 
-//template<class... Args>
-class BFTask
-{
-public:
+typedef std::function<void()> Task;
 
-	BFTask(std::function<void()> func) : operation(func) {};
-
-	void Run()
-	{
-		operation();
-	};
-
-private:
-
-	std::function<void()> operation;
-};
-
-
+// Each BFThread contains a part of tasks in BFThreadPool.
 class BFThread
 {
 public:
-	BFThread(int i) : ID(i) {};
-	template<class Task>
-	void Run(std::vector<Task>& tasks)
-	{
-		while (true)
-		{
-			BFThreadPool::mutex.lock();
-			if (BFThreadPool::TaskId < tasks.size())
-			{
-				auto id = BFThreadPool::TaskId++;
-				BFThreadPool::mutex.unlock();
-				tasks[id].Run();
-			}
-			else
-			{
-				BFThreadPool::mutex.unlock();
-				break;
-			}
-		}
-	}
+	BFThread(int i) : mID(i), mBeginTaskId(0), mEndTaskId(0) {};
+
+	void Run();
+	void AssignTask(int begin, int end) { mBeginTaskId = begin; mEndTaskId = end; }
 
 private:
-	int ID;
+
+	int mID;
+	int mBeginTaskId;
+	int mEndTaskId;
 };
 
+// A BFThreadPool contains a set of tasks and sub threads.
 class BFThreadPool
 {
 public:
 
-	static int TaskId;
-	static std::mutex mutex;
-
 	BFThreadPool(int n = 10) : mThreadNum(n) {};
 
-	template<class Task>
-	void StartUp(std::vector<Task>& tasks)
+	// Start all BFThread in std::threasds.
+	void StartUp()
 	{
+		mThreads.resize(mThreadNum);
 		for (int i = 0; i < mThreadNum; ++i)
 		{
-			BFThread thread(i);
-			//mThreads.emplace_back(&BFThread::Run<Task>, &thread, std::ref(tasks), i);
-			mThreads.emplace_back(&BFThread::Run<Task>, &thread, std::ref(tasks));
+			// Split tasks for each thread.
+			BFThread t(i);
+			int start = i * (tasks.size() / mThreadNum);
+			int end = (i + 1) * (tasks.size() / mThreadNum);
+			t.AssignTask(start, end > tasks.size() ? tasks.size() : end);
+			mThreads[i] = std::thread(&BFThread::Run, t);// Start each thread.
 		}
 
 		for (int i = 0; i < mThreads.size(); ++i)
@@ -80,6 +53,8 @@ public:
 
 		return;
 	}
+
+	static std::vector<Task> tasks;
 
 private:
 

@@ -102,9 +102,11 @@ private:
 
 	void FragmentShader_DrawTriangles(Fragment& inFrag);
 
+	void FragmentShader(Fragment& frag, Fragment_FSO& fsOut) const;
+
 	bool mFunction_HorizontalIntersect(float y, const VEC2& v1, const VEC2& v2, const VEC2& v3, UINT& outX1, UINT& outX2);// Get two x coordinates at y.
 
-	VEC3 mFunction_SampleTexture(float x, float y);
+	VEC3 mFunction_SampleTexture(float x, float y) const;
 };
 
 #endif // BFRENDER

@@ -52,6 +52,12 @@ struct Fragment
 	VEC3 Normal;
 };
 
+struct Fragment_FSO
+{
+	UINT BufferId;
+	VEC3 Color;
+};
+
 struct RenderBuffer
 {
 	RenderBuffer(UINT _BufferWidth, UINT _BufferHeight, std::vector<float>* _pZBuffer, std::vector<VEC3>* _pColorBuffer):

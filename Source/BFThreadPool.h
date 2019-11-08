@@ -4,8 +4,10 @@
 
 #include<functional>
 #include<thread>
+#include<mutex>
 #include<iostream>
 #include<vector>
+#include<algorithm>
 
 typedef std::function<void()> Task;
 
@@ -14,6 +16,7 @@ class BFThread
 {
 public:
 	BFThread(int i) : mID(i), mBeginTaskId(0), mEndTaskId(0) {};
+	BFThread(int i, int b_id, int e_id) :mID(i), mBeginTaskId(b_id), mEndTaskId(e_id) {};
 
 	void Run();
 	void AssignTask(int begin, int end) { mBeginTaskId = begin; mEndTaskId = end; }
@@ -28,33 +31,36 @@ private:
 // A BFThreadPool contains a set of tasks and sub threads.
 class BFThreadPool
 {
+	friend class IBFRenderPipeline;
+
 public:
 
-	BFThreadPool(int n = 10) : mThreadNum(n) {};
+	BFThreadPool(int n = 10) : mThreadNum(n) { mThreads.clear(); };
 
 	// Start all BFThread in std::threasds.
 	void StartUp()
 	{
-		mThreads.resize(mThreadNum);
-		for (int i = 0; i < mThreadNum; ++i)
+		//mThreads.resize(mThreadNum);
+		int task_length = (tasks.size() / mThreadNum);
+		std::vector<BFThread> bfThreads;
+		for (int i = 0; i < mThreadNum; i++)
 		{
 			// Split tasks for each thread.
-			BFThread t(i);
-			int start = i * (tasks.size() / mThreadNum);
-			int end = (i + 1) * (tasks.size() / mThreadNum);
-			t.AssignTask(start, end > tasks.size() ? tasks.size() : end);
-			mThreads[i] = std::thread(&BFThread::Run, t);// Start each thread.
+			int start = i * task_length;
+			int end = start + task_length;
+			bfThreads.emplace_back(i, start, end);
 		}
-
-		for (int i = 0; i < mThreads.size(); ++i)
+		for (int j = 0; j < mThreadNum; j++)
 		{
-			mThreads[i].join();
+			mThreads.emplace_back(std::thread(&BFThread::Run, &(bfThreads.at(j))));// Start each thread.
 		}
-
-		return;
+		// Wait.
+		std::for_each(mThreads.begin(), mThreads.end(), std::mem_fn(&std::thread::join));
+	
 	}
 
 	static std::vector<Task> tasks;
+	static std::mutex mutex;
 
 private:
 
@@ -62,7 +68,6 @@ private:
 	std::vector<std::thread> mThreads;
 
 };
-
 
 #endif // !BFTHREADPOOL
 

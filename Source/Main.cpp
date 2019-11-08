@@ -23,7 +23,7 @@ int main()
 	Mesh* cuteMesh = new Mesh();
 	resourceManager->ImportMesh_OBJ("../Asset/nanosuit.obj", cuteMesh);
 	//resourceManager->ImportTexture_PPM("../Asset/rock.ppm", coolTexture);
-	resourceManager->ImportTexture_BMP("../Asset/car.bmp", coolTexture);
+	resourceManager->ImportTexture_BMP("../Asset/awesomeface.bmp", coolTexture);
 	cuteMesh->BindTexture(coolTexture);
 
 	BFContent::m_pLights[0] = new SpotLight(VEC3{0.f, 0.f, -10.f});
@@ -50,19 +50,20 @@ int main()
 	DWORD lastTime = 0;
 	DWORD curTime;
 	UINT frame = 0;
-	float max_fps = -1;
+	//float max_fps = -1;
 	cuteMesh->RotateWithY(1.f);
 
 	while (!BFContent::ShouldFinish())
+	//for (size_t i = 0; i < 1; i++)
 	{
 		screen_dispatch();
 		curTime = timeGetTime();
 		float fps = 1 * 1000 / float(curTime - lastTime);
-		if (fps > max_fps) max_fps = fps;
-		std::string fpsStr = std::to_string(max_fps);
+		//if (fps > max_fps) max_fps = fps;
+		std::string fpsStr = std::to_string(fps);
 		lastTime = curTime;
 		::SetConsoleTitleA(fpsStr.c_str());
-		//std::cout << fpsStr << '\r';
+		std::cout << fpsStr << '\r';
 		renderer->Clear();
 		
 		// Input.
@@ -79,13 +80,15 @@ int main()
 			}
 		}
 
-		/*cubeMesh->RotateWithY(1.f);
-		renderer->RenderMesh(cubeMesh);*/
-		//cuteMesh->RotateWithY(1.f);
+		cubeMesh->RotateWithY(1.f);
+		renderer->RenderMesh(cubeMesh);
 
+		cuteMesh->RotateWithY(1.f);
 		renderer->RenderMesh(cuteMesh);
 
 		renderer->Display();
 		
 	}
+
+	system("pause");
 }

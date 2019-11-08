@@ -75,21 +75,25 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 	BFThreadPool thread_pool(8);
 	BFThreadPool::tasks.clear();
 
+	std::vector<Fragment_FSO> fragmentOutputs;
+	fragmentOutputs.resize(m_pFB_Rasterized->size());
+
+	int id = 0;
 	// Collect all tasks.
 	for (Fragment& fragment : *m_pFB_Rasterized)
 	{
-		BFThreadPool::tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader_DrawTriangles, this, std::ref(fragment)));
+		BFThreadPool::tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader, this ,std::ref(fragment),
+			std::ref(fragmentOutputs[id++])));
 	}
+	auto t5 = timeGetTime();
 
 	thread_pool.StartUp();// Start all threads then wait them all finish.
 
-	auto t5 = timeGetTime();
+	for (auto& fsOut : fragmentOutputs)
+	{
+		m_pColorBuffer->at(fsOut.BufferId) = fsOut.Color;
+	}
 
-	//for (Fragment& fragment : *m_pFB_Rasterized)
-	//{
-	//	FragmentShader_DrawTriangles(fragment);
-	//	//BFThreadPool::tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader_DrawTriangles, this, std::ref(fragment)));
-	//}
 	auto t6 = timeGetTime();
 
 	//std::cout << "vs : " << t2 - t1 << ", clip : " << t3 - t2 << ", Rasterize : " << t4 - t3 << ", FS : " << t5 - t4 << " : "<< t6 - t5 <<std::endl;
@@ -214,7 +218,7 @@ void IBFRenderPipeline::RasterizeTriangles()
 		}
 		else
 		{
-			continue;// Three points in one line.
+			//continue;// Three points in one line.
 		}
 
 		// Scanline Y pixel coordinate value range.
@@ -330,9 +334,10 @@ bool IBFRenderPipeline::DepthTest(UINT pixel_x, UINT pixel_y, float depth)
 
 void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 {
+	
 	COLOR3 outColor;
 	COLOR3 texSampleColor = mFunction_SampleTexture(inFrag.Texcoord.x, inFrag.Texcoord.y);
-	//outColor = inFrag.Color.xyz() * texSampleColor;
+	outColor = inFrag.Color.xyz() * texSampleColor;
 
 	// For lights.
 	auto viewDir = inFrag.FragPos - mCameraPos;
@@ -393,9 +398,80 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 		}
 	}
 
+
 	ClampColor(outColor);
 	m_pColorBuffer->at(inFrag.PixelY * mBufferWidth + inFrag.PixelX) = outColor;
+	
+}
 
+void IBFRenderPipeline::FragmentShader(Fragment& frag, Fragment_FSO& fsOut) const
+{
+	COLOR3 outColor;
+	COLOR3 texSampleColor = mFunction_SampleTexture(frag.Texcoord.x, frag.Texcoord.y);
+	outColor = frag.Color.xyz() * texSampleColor;// The origin color without light.
+
+	// For lights.
+	auto viewDir = frag.FragPos - mCameraPos;
+	for (auto pLight : BFContent::m_pLights)
+	{
+		if (pLight == nullptr) break;
+		if (DirectionLight* pDLight = dynamic_cast<DirectionLight*>(pLight))
+		{
+			auto lightDir = pDLight->Direction;
+			float diff = max(frag.Normal.CosineValue(-lightDir), 0.f);
+			auto reflectDir = Reflect(lightDir, frag.Normal);
+			float spec = (-viewDir).CosineValue(reflectDir);
+
+			COLOR3 ambient = pDLight->AmbientColor * texSampleColor;
+			COLOR3 diffuse = pDLight->DiffuseColor * diff *texSampleColor;// Should multiply by a material intensity.
+			COLOR3 specular = pDLight->SpecluarColor * spec * texSampleColor;
+
+			outColor += (ambient + diffuse + specular);
+			//std::cout << outColor << std::endl;
+		}
+		else if(PointLight* pPLight = dynamic_cast<PointLight*>(pLight))
+		{
+			auto lightDir = frag.FragPos - pPLight->Position;
+			float diff = max(frag.Normal.CosineValue(-lightDir), 0.f);
+			auto reflectDir = Reflect(lightDir, frag.Normal);
+			float spec = (-viewDir).CosineValue(reflectDir);
+
+			COLOR3 ambient = pPLight->AmbientColor * texSampleColor;
+			COLOR3 diffuse = pPLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
+			COLOR3 specular = pPLight->SpecluarColor * spec * texSampleColor;
+
+			// Attenuation.
+			float distance = (frag.FragPos - pPLight->Position).Length();
+			float attenuation = 1.f / (pPLight->Constant + pPLight->Linear * distance
+				+ pPLight->Quadratic * distance * distance);
+			ambient *= attenuation;
+			diffuse *= attenuation;
+			specular *= attenuation;
+
+			outColor += (ambient + diffuse + specular);
+		}
+		else if (SpotLight* pSLight = dynamic_cast<SpotLight*>(pLight))
+		{
+			auto lightDir = frag.FragPos - pSLight->Position;
+			float theta = lightDir.CosineValue(pSLight->Direction);
+			float intensity = Clamp((theta - pSLight->OutterTheta) / pSLight->Epsilon, 0.f, 1.f);
+
+			float diff = max(frag.Normal.CosineValue(-lightDir), 0.f);
+			auto reflectDir = Reflect(lightDir, frag.Normal);
+			float spec = (-viewDir).CosineValue(reflectDir);
+
+			COLOR3 ambient = pSLight->AmbientColor * texSampleColor;
+			COLOR3 diffuse = pSLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
+			COLOR3 specular = pSLight->SpecluarColor * spec * texSampleColor;
+
+			outColor += (ambient + diffuse * intensity + specular * intensity);
+			
+		}
+	}
+
+	ClampColor(outColor);
+	fsOut.BufferId = frag.PixelY * mBufferWidth + frag.PixelX;
+	fsOut.Color = outColor;
 }
 
 bool IBFRenderPipeline::mFunction_HorizontalIntersect(float y, const VEC2 & v1, const VEC2 & v2, const VEC2 & v3, UINT & outX1, UINT & outX2)
@@ -502,7 +578,7 @@ bool IBFRenderPipeline::mFunction_HorizontalIntersect(float y, const VEC2 & v1, 
 	}
 }
 
-inline VEC3 IBFRenderPipeline::mFunction_SampleTexture(float x, float y)
+inline VEC3 IBFRenderPipeline::mFunction_SampleTexture(float x, float y) const
 {
 	// Mapping texture color to frag.
 	if (!m_pTexture) return VEC3(1.0f);

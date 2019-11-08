@@ -12,7 +12,7 @@ inline void ABFActor::AddMovement(const VEC3 & direction, float movement)
 
 ABFActor::ABFActor()
 {
-	mPosition = { 0.f, 0.f, -200.f };
+	mPosition = { 0.f, 0.f, -50.f };
 	m_pCamera = new IBFCamera(mPosition);
 	mMoveSpeed = 1.f;
 }

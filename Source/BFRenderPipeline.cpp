@@ -77,13 +77,13 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 	BFThreadPool thread_pool(8);
 	BFThreadPool::tasks.clear();
 
-	//int id = 0;
 	// Collect all tasks.
-	for(auto it = m_pFB_Rasterized->begin(); it!=m_pFB_Rasterized->end();++it)
+	for (auto it = m_pFB_Rasterized->begin(); it != m_pFB_Rasterized->end(); ++it)
 	{
-		COLOR3& outColor = m_pColorBuffer->at(it->first);
+		//COLOR3& outColor = m_pColorBuffer->at(it->first);
 		auto& fragment = it->second;
-		BFThreadPool::tasks.emplace_back([&fragment, &outColor, this]() {FragmentShader(fragment, outColor); });
+		BFThreadPool::tasks.emplace_back([&fragment, this]() {FragmentShader_DrawTriangles(fragment); });// Faster than two para func.
+		//FragmentShader(fragment, outColor);
 		//FragmentShader_DrawTriangles(fragment);
 	}
 

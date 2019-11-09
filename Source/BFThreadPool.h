@@ -49,14 +49,10 @@ public:
 			int start = i * task_length;
 			int end = start + task_length;
 			bfThreads.emplace_back(i, start, end);
-		}
-		for (int j = 0; j < mThreadNum; j++)
-		{
-			mThreads.emplace_back(std::thread(&BFThread::Run, &(bfThreads.at(j))));// Start each thread.
+			mThreads.emplace_back(std::thread(&BFThread::Run, *(bfThreads.end()-1)));
 		}
 		// Wait.
 		std::for_each(mThreads.begin(), mThreads.end(), std::mem_fn(&std::thread::join));
-	
 	}
 
 	static std::vector<Task> tasks;

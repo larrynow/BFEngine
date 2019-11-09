@@ -17,7 +17,7 @@ void IBFDeviceRenderer::Init(UINT bufferWidth, UINT bufferHeight, IBFCamera* cam
 	m_pCamera = camera;
 
 	// Create buffers;
-	m_pZBuffer = new std::vector<float>(mBufferSize);
+	m_pZBuffer = new std::vector<float>(mBufferSize, 1.f);
 	m_pColorBuffer = new std::vector<COLOR3>(mBufferSize, 1.f);
 
 	// Initialize RnederPipeline.

@@ -3,6 +3,7 @@
 #define BFRENDERPIPELINE
 
 #include "BFEngine.h"
+#include<unordered_map>
 
 /*
 * A render pipeline interface.
@@ -96,13 +97,14 @@ private:
 
 	void RasterizePoints();
 
-	std::vector<Fragment>* m_pFB_Rasterized;
+	//std::vector<Fragment>* m_pFB_Rasterized;
+	std::unordered_map<UINT, Fragment>* m_pFB_Rasterized;// The Fragment should be marked by bufferIndex(y*width+x), thus will replaced by fragment with a lower Z-value.
 
 	bool DepthTest(UINT pixel_x, UINT pixel_y, float depth);
 
 	void FragmentShader_DrawTriangles(Fragment& inFrag);
 
-	void FragmentShader(Fragment& frag, Fragment_FSO& fsOut) const;
+	void FragmentShader(Fragment& frag, COLOR3& outColor) const;
 
 	bool mFunction_HorizontalIntersect(float y, const VEC2& v1, const VEC2& v2, const VEC2& v3, UINT& outX1, UINT& outX2);// Get two x coordinates at y.
 

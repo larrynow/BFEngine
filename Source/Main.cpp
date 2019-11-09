@@ -30,7 +30,9 @@ int main()
 
 	// Note, the BindInput should be excuted in actor(or controller) class.
 	content->RegisterInput(BFInput::KEY_W, "forward");
-	content->BindInput("forward", std::bind(&ABFActor::MoveForward, content->m_pControlledActor));
+	// content->BindInput("forward", std::bind(&ABFActor::MoveForward, content->m_pControlledActor));
+	// Replace std::bind with lambda for ckeckable and inline faster.
+	content->BindInput("forward", [content]() {if (content->m_pControlledActor) content->m_pControlledActor->MoveForward(); });
 	content->RegisterInput(BFInput::KEY_S, "backward");
 	content->BindInput("backward", std::bind(&ABFActor::MoveBack, content->m_pControlledActor));
 	content->RegisterInput(BFInput::KEY_A, "left");
@@ -63,7 +65,7 @@ int main()
 		std::string fpsStr = std::to_string(fps);
 		lastTime = curTime;
 		::SetConsoleTitleA(fpsStr.c_str());
-		std::cout << fpsStr << '\r';
+		//std::cout << fpsStr << '\r';
 		renderer->Clear();
 		
 		// Input.
@@ -79,9 +81,8 @@ int main()
 				op();
 			}
 		}
-
-		cubeMesh->RotateWithY(1.f);
-		renderer->RenderMesh(cubeMesh);
+		//cubeMesh->RotateWithY(1.f);
+		//renderer->RenderMesh(cubeMesh);
 
 		cuteMesh->RotateWithY(1.f);
 		renderer->RenderMesh(cuteMesh);

@@ -26,5 +26,6 @@
 
 #define MSG(msg) ::MessageBoxA(0, msg, 0, 0)
 #define IS_KEY_DOWN(vk_code) ((GetAsyncKeyState(vk_code) & 0x8000) ? 1 : 0)
+#define PRINT(msg) std::cout<<msg<<std::endl
 
 #endif // !BFENGINE

@@ -1,6 +1,7 @@
 #include "BFRenderPipeline.h"
 #include"BFContent.h"
 #include"BFThreadPool.h"
+#include<set>
 
 bool IBFRenderPipeline::Init(RenderBuffer & initBuffers)
 {
@@ -29,7 +30,8 @@ bool IBFRenderPipeline::Init(RenderBuffer & initBuffers)
 	m_pVB_ClipSpace = new std::vector<Vertex_VSO>;
 	m_pVB_ClipSpace_Clipped = new std::vector<Vertex_VSO>;
 	m_pIB_ClipSpace_Clipped = new std::vector <UINT>;
-	m_pFB_Rasterized = new std::vector<Fragment>;
+	//m_pFB_Rasterized = new std::vector<Fragment>;
+	m_pFB_Rasterized = new std::unordered_map<UINT, Fragment>;
 
 	return true;
 }
@@ -75,28 +77,22 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 	BFThreadPool thread_pool(8);
 	BFThreadPool::tasks.clear();
 
-	std::vector<Fragment_FSO> fragmentOutputs;
-	fragmentOutputs.resize(m_pFB_Rasterized->size());
-
-	int id = 0;
+	//int id = 0;
 	// Collect all tasks.
-	for (Fragment& fragment : *m_pFB_Rasterized)
+	for(auto it = m_pFB_Rasterized->begin(); it!=m_pFB_Rasterized->end();++it)
 	{
-		BFThreadPool::tasks.emplace_back(std::bind(&IBFRenderPipeline::FragmentShader, this ,std::ref(fragment),
-			std::ref(fragmentOutputs[id++])));
+		COLOR3& outColor = m_pColorBuffer->at(it->first);
+		auto& fragment = it->second;
+		BFThreadPool::tasks.emplace_back([&fragment, &outColor, this]() {FragmentShader(fragment, outColor); });
+		//FragmentShader_DrawTriangles(fragment);
 	}
+
 	auto t5 = timeGetTime();
-
 	thread_pool.StartUp();// Start all threads then wait them all finish.
-
-	for (auto& fsOut : fragmentOutputs)
-	{
-		m_pColorBuffer->at(fsOut.BufferId) = fsOut.Color;
-	}
 
 	auto t6 = timeGetTime();
 
-	//std::cout << "vs : " << t2 - t1 << ", clip : " << t3 - t2 << ", Rasterize : " << t4 - t3 << ", FS : " << t5 - t4 << " : "<< t6 - t5 <<std::endl;
+	std::cout << "vs : " << t2 - t1 << ", clip : " << t3 - t2 << ", Rasterize : " << t4 - t3 << ", FS : " << t5 - t4 << " : "<< t6 - t5 <<std::endl;
 
 }
 
@@ -117,7 +113,7 @@ void IBFRenderPipeline::VertexShader(const Vertex & vertex)
 	pos.x /= pos.w;
 	pos.y /= pos.w;
 	pos.z /= pos.w;
-	
+
 	// Normal.
 	MAT4 WorldMatrix_NoTranform = mWorldMatrix;
 	WorldMatrix_NoTranform.SetColumn(3, { 0, 0, 0, 1.0f });// Just rotate, without transform.
@@ -181,7 +177,6 @@ void IBFRenderPipeline::RasterizeTriangles()
 		return;
 	for (size_t i = 0; i < m_pIB_ClipSpace_Clipped->size()-2; i+=3)
 	{
-		Fragment outFrag;
 
 		auto id1 = m_pIB_ClipSpace_Clipped->at(i);
 		auto id2 = m_pIB_ClipSpace_Clipped->at(i+1);
@@ -249,41 +244,45 @@ void IBFRenderPipeline::RasterizeTriangles()
 					float s = (VecV1_currentPoint.x * Vec1_3.y - VecV1_currentPoint.y * Vec1_3.x) / d_Z;// The portion ratio of v2 color: area(V1, v3, current)/area(v1, v3, v2).
 					float t = (Vec1_2.x * VecV1_currentPoint.y - Vec1_2.y * VecV1_currentPoint.x) / d_Z;// The portion ratio of V3 color.
 
-					float depth = (s * v2.ClipPos.z + t * v3.ClipPos.z + (1 - t - s) * v1.ClipPos.z);
-					// Depth Test.
-					if (!DepthTest(x, y, depth))
-						continue;
-					else
-					{
-						m_pZBuffer->at(y*mBufferHeight + x) = depth;
-					}
-					// if(ZTEST_writtable)...
-
-					outFrag.PixelX = x;
-					outFrag.PixelY = y;
-
 					// Get current 1/z for interpolate values.
 					float one_div_z = (s / v2.ClipPos.w + t / v3.ClipPos.w + (1 - t - s) / v1.ClipPos.w);// w is z in view.
 
-					// Calculate color by perspective interpolation.
-					outFrag.Color = (s / v2.ClipPos.w * v2.Color +
-						t / v3.ClipPos.w * v3.Color +
-						(1 - t - s) / v1.ClipPos.w * v1.Color)/ one_div_z;
+					//float depth = (s / v2.ClipPos.w * v2.ClipPos.z +
+					//	t / v3.ClipPos.w * v3.ClipPos.z +
+					//	(1 - t - s) / v1.ClipPos.w * v1.ClipPos.z)/one_div_z;
+					float depth = s * v2.ClipPos.z + t * v3.ClipPos.z + (1 - t - s) * v1.ClipPos.z;
+					//PRINT(depth);
+					// Depth Test.
+					if (DepthTest(x, y, depth))
+					{
+						//m_pZBuffer->at(y * mBufferWidth + x) = depth;
+						// if(ZTEST_writtable)...
 
-					// Calculate Texcoord by perspective interpolation.
-					outFrag.Texcoord = (s * v2.Texcoord / v2.ClipPos.w +
-						t * v3.Texcoord / v3.ClipPos.w +
-						(1 - t - s) * v1.Texcoord / v1.ClipPos.w) / one_div_z;
+						Fragment outFrag;
 
-					outFrag.FragPos = (s * v2.WordPos / v2.ClipPos.w +
-						t * v3.WordPos / v3.ClipPos.w +
-						(1 - t - s) * v1.WordPos / v1.ClipPos.w) / one_div_z;
+						outFrag.PixelX = x;
+						outFrag.PixelY = y;
 
-					outFrag.Normal = (s * v2.Normal / v2.ClipPos.w +
-						t * v3.Normal / v3.ClipPos.w +
-						(1 - t - s) * v1.Normal / v1.ClipPos.w) / one_div_z;
+						// Calculate color by perspective interpolation.
+						outFrag.Color = (s / v2.ClipPos.w * v2.Color +
+							t / v3.ClipPos.w * v3.Color +
+							(1 - t - s) / v1.ClipPos.w * v1.Color) / one_div_z;
 
-					m_pFB_Rasterized->push_back(outFrag);
+						// Calculate Texcoord by perspective interpolation.
+						outFrag.Texcoord = (s * v2.Texcoord / v2.ClipPos.w +
+							t * v3.Texcoord / v3.ClipPos.w +
+							(1 - t - s) * v1.Texcoord / v1.ClipPos.w) / one_div_z;
+
+						outFrag.FragPos = (s * v2.WordPos / v2.ClipPos.w +
+							t * v3.WordPos / v3.ClipPos.w +
+							(1 - t - s) * v1.WordPos / v1.ClipPos.w) / one_div_z;
+
+						outFrag.Normal = (s * v2.Normal / v2.ClipPos.w +
+							t * v3.Normal / v3.ClipPos.w +
+							(1 - t - s) * v1.Normal / v1.ClipPos.w) / one_div_z;
+
+						(*m_pFB_Rasterized)[y * mBufferWidth + x] = outFrag;
+					}
 				}
 			}
 
@@ -316,7 +315,7 @@ void IBFRenderPipeline::RasterizePoints()
 		outFragment.Color = vertex.Color;
 		outFragment.Texcoord = vertex.Texcoord;
 
-		m_pFB_Rasterized->push_back(outFragment);
+		//m_pFB_Rasterized->push_back(outFragment);
 	}
 
 
@@ -324,8 +323,10 @@ void IBFRenderPipeline::RasterizePoints()
 
 bool IBFRenderPipeline::DepthTest(UINT pixel_x, UINT pixel_y, float depth)
 {
-	if (depth <= (m_pZBuffer->at(pixel_y*mBufferHeight + pixel_x)))
+	if (depth < (m_pZBuffer->at(pixel_y*mBufferWidth + pixel_x)))
 	{
+		//PRINT(depth << ":" << (m_pZBuffer->at(pixel_y * mBufferWidth + pixel_x)));
+		m_pZBuffer->at(pixel_y * mBufferWidth + pixel_x) = depth;
 		return true;
 	}
 	else
@@ -334,7 +335,6 @@ bool IBFRenderPipeline::DepthTest(UINT pixel_x, UINT pixel_y, float depth)
 
 void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 {
-	
 	COLOR3 outColor;
 	COLOR3 texSampleColor = mFunction_SampleTexture(inFrag.Texcoord.x, inFrag.Texcoord.y);
 	outColor = inFrag.Color.xyz() * texSampleColor;
@@ -404,9 +404,8 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 	
 }
 
-void IBFRenderPipeline::FragmentShader(Fragment& frag, Fragment_FSO& fsOut) const
+void IBFRenderPipeline::FragmentShader(Fragment& frag, COLOR3& outColor) const
 {
-	COLOR3 outColor;
 	COLOR3 texSampleColor = mFunction_SampleTexture(frag.Texcoord.x, frag.Texcoord.y);
 	outColor = frag.Color.xyz() * texSampleColor;// The origin color without light.
 
@@ -423,13 +422,13 @@ void IBFRenderPipeline::FragmentShader(Fragment& frag, Fragment_FSO& fsOut) cons
 			float spec = (-viewDir).CosineValue(reflectDir);
 
 			COLOR3 ambient = pDLight->AmbientColor * texSampleColor;
-			COLOR3 diffuse = pDLight->DiffuseColor * diff *texSampleColor;// Should multiply by a material intensity.
+			COLOR3 diffuse = pDLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
 			COLOR3 specular = pDLight->SpecluarColor * spec * texSampleColor;
 
 			outColor += (ambient + diffuse + specular);
 			//std::cout << outColor << std::endl;
 		}
-		else if(PointLight* pPLight = dynamic_cast<PointLight*>(pLight))
+		else if (PointLight* pPLight = dynamic_cast<PointLight*>(pLight))
 		{
 			auto lightDir = frag.FragPos - pPLight->Position;
 			float diff = max(frag.Normal.CosineValue(-lightDir), 0.f);
@@ -465,13 +464,11 @@ void IBFRenderPipeline::FragmentShader(Fragment& frag, Fragment_FSO& fsOut) cons
 			COLOR3 specular = pSLight->SpecluarColor * spec * texSampleColor;
 
 			outColor += (ambient + diffuse * intensity + specular * intensity);
-			
+
 		}
 	}
 
 	ClampColor(outColor);
-	fsOut.BufferId = frag.PixelY * mBufferWidth + frag.PixelX;
-	fsOut.Color = outColor;
 }
 
 bool IBFRenderPipeline::mFunction_HorizontalIntersect(float y, const VEC2 & v1, const VEC2 & v2, const VEC2 & v3, UINT & outX1, UINT & outX2)

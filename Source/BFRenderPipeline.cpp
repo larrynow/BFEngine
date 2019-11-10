@@ -68,21 +68,6 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 
 	if (m_pIB_ClipSpace_Clipped->empty())
 		return;
-	struct IndexUnit
-	{
-		UINT index1;
-		UINT index2;
-		UINT index3;
-	};
-	// Sort triangles by their z-values for overlap removal.
-	std::vector<IndexUnit>* pIndexUintBuffers = (std::vector<IndexUnit> * )m_pIB_ClipSpace_Clipped;
-	std::sort(pIndexUintBuffers->begin(), pIndexUintBuffers->end(),
-		[this](const IndexUnit& IU1, const IndexUnit& IU2)
-		{return max(m_pVB_ClipSpace_Clipped->at(IU1.index1).ClipPos.z, m_pVB_ClipSpace_Clipped->at(IU1.index2).ClipPos.z,
-			m_pVB_ClipSpace_Clipped->at(IU1.index3).ClipPos.z) <
-		max(m_pVB_ClipSpace_Clipped->at(IU2.index1).ClipPos.z, m_pVB_ClipSpace_Clipped->at(IU2.index2).ClipPos.z,
-			m_pVB_ClipSpace_Clipped->at(IU2.index3).ClipPos.z); });
-
 
 	////////////////////////////////////////////////
 	// Rasterizing.
@@ -189,7 +174,6 @@ void IBFRenderPipeline::Clip_Triangles(std::vector<UINT>* const pIB)
 
 void IBFRenderPipeline::RasterizeTriangles()
 {
-	int count = 0;
 	if (m_pIB_ClipSpace_Clipped->empty())
 		return;
 	for (size_t i = 0; i < m_pIB_ClipSpace_Clipped->size()-2; i+=3)
@@ -300,14 +284,11 @@ void IBFRenderPipeline::RasterizeTriangles()
 
 						(*m_pFB_Rasterized)[y * mBufferWidth + x] = outFrag;
 					}
-					else
-						count++;
 				}
 			}
 
 		}
 	}// For every clipped vertex.
-	PRINT(count);
 }
 
 void IBFRenderPipeline::RasterizePoints()

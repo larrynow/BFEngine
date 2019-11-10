@@ -81,11 +81,17 @@ int main()
 				op();
 			}
 		}
+
+		// Sort meshs by their z-values, from near to far.
+		std::vector<Mesh*>* pContentMeshs;
+		std::sort(pContentMeshs->begin(), pContentMeshs->end(),
+			[](const Mesh* mesh1, const Mesh& mesh2) {return mesh1->GetPosition().z < mesh2.GetPosition().z; });
+
 		//cubeMesh->RotateWithY(1.f);
 		//renderer->RenderMesh(cubeMesh);
 		float t1 = timeGetTime();
 
-		//cuteMesh->RotateWithY(1.f);
+		cuteMesh->RotateWithY(1.f);
 		renderer->RenderMesh(cuteMesh);
 
 		float t2 = timeGetTime();

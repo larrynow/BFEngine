@@ -55,6 +55,12 @@ public:
 		std::for_each(mThreads.begin(), mThreads.end(), std::mem_fn(&std::thread::join));
 	}
 
+	void Clear()
+	{
+		tasks.clear();
+		mThreads.clear();
+	}
+
 	static std::vector<Task> tasks;
 	static std::mutex mutex;
 

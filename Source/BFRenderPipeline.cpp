@@ -1,7 +1,6 @@
 #include "BFRenderPipeline.h"
 #include"BFContent.h"
 #include"BFThreadPool.h"
-#include<set>
 
 bool IBFRenderPipeline::Init(RenderBuffer & initBuffers)
 {
@@ -30,7 +29,6 @@ bool IBFRenderPipeline::Init(RenderBuffer & initBuffers)
 	m_pVB_ClipSpace = new std::vector<Vertex_VSO>;
 	m_pVB_ClipSpace_Clipped = new std::vector<Vertex_VSO>;
 	m_pIB_ClipSpace_Clipped = new std::vector <UINT>;
-	//m_pFB_Rasterized = new std::vector<Fragment>;
 	m_pFB_Rasterized = new std::unordered_map<UINT, Fragment>;
 
 	return true;
@@ -67,32 +65,50 @@ void IBFRenderPipeline::RenderTriangles(RenderData & renderData)
 
 	Clip_Triangles(pIndexBuffer);
 	auto t3 = timeGetTime();
+
+	if (m_pIB_ClipSpace_Clipped->empty())
+		return;
+	struct IndexUnit
+	{
+		UINT index1;
+		UINT index2;
+		UINT index3;
+	};
+	// Sort triangles by their z-values for overlap removal.
+	std::vector<IndexUnit>* pIndexUintBuffers = (std::vector<IndexUnit> * )m_pIB_ClipSpace_Clipped;
+	std::sort(pIndexUintBuffers->begin(), pIndexUintBuffers->end(),
+		[this](const IndexUnit& IU1, const IndexUnit& IU2)
+		{return max(m_pVB_ClipSpace_Clipped->at(IU1.index1).ClipPos.z, m_pVB_ClipSpace_Clipped->at(IU1.index2).ClipPos.z,
+			m_pVB_ClipSpace_Clipped->at(IU1.index3).ClipPos.z) <
+		max(m_pVB_ClipSpace_Clipped->at(IU2.index1).ClipPos.z, m_pVB_ClipSpace_Clipped->at(IU2.index2).ClipPos.z,
+			m_pVB_ClipSpace_Clipped->at(IU2.index3).ClipPos.z); });
+
+
 	////////////////////////////////////////////////
 	// Rasterizing.
 
-	RasterizeTriangles();// TODO : Now Rasterize takes most time.
+	RasterizeTriangles();
+
 	auto t4 = timeGetTime();
 	////////////////////////////////////////////////
 	// Fragment Shader.
-	BFThreadPool thread_pool(8);
-	BFThreadPool::tasks.clear();
+
+	BFThreadPool thread_pool(8);// Use thread pool to speed up.
+	thread_pool.Clear();
 
 	// Collect all tasks.
 	for (auto it = m_pFB_Rasterized->begin(); it != m_pFB_Rasterized->end(); ++it)
 	{
-		//COLOR3& outColor = m_pColorBuffer->at(it->first);
 		auto& fragment = it->second;
-		BFThreadPool::tasks.emplace_back([&fragment, this]() {FragmentShader_DrawTriangles(fragment); });// Faster than two para func.
-		//FragmentShader(fragment, outColor);
-		//FragmentShader_DrawTriangles(fragment);
+		BFThreadPool::tasks.emplace_back([&fragment, this]() {FragmentShader(fragment); });// Faster than two para func.
 	}
-
 	auto t5 = timeGetTime();
+
 	thread_pool.StartUp();// Start all threads then wait them all finish.
 
 	auto t6 = timeGetTime();
 
-	std::cout << "vs : " << t2 - t1 << ", clip : " << t3 - t2 << ", Rasterize : " << t4 - t3 << ", FS : " << t5 - t4 << " : "<< t6 - t5 <<std::endl;
+	//std::cout << "vs : " << t2 - t1 << ", clip : " << t3 - t2 << ", Rasterize : " << t4 - t3 << ", FS : " << t5 - t4 << " : "<< t6 - t5 <<std::endl;
 
 }
 
@@ -173,6 +189,7 @@ void IBFRenderPipeline::Clip_Triangles(std::vector<UINT>* const pIB)
 
 void IBFRenderPipeline::RasterizeTriangles()
 {
+	int count = 0;
 	if (m_pIB_ClipSpace_Clipped->empty())
 		return;
 	for (size_t i = 0; i < m_pIB_ClipSpace_Clipped->size()-2; i+=3)
@@ -283,11 +300,14 @@ void IBFRenderPipeline::RasterizeTriangles()
 
 						(*m_pFB_Rasterized)[y * mBufferWidth + x] = outFrag;
 					}
+					else
+						count++;
 				}
 			}
 
 		}
 	}// For every clipped vertex.
+	PRINT(count);
 }
 
 void IBFRenderPipeline::RasterizePoints()
@@ -333,7 +353,7 @@ bool IBFRenderPipeline::DepthTest(UINT pixel_x, UINT pixel_y, float depth)
 		return false;
 }
 
-void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
+void IBFRenderPipeline::FragmentShader(Fragment& inFrag)
 {
 	COLOR3 outColor;
 	COLOR3 texSampleColor = mFunction_SampleTexture(inFrag.Texcoord.x, inFrag.Texcoord.y);
@@ -398,77 +418,9 @@ void IBFRenderPipeline::FragmentShader_DrawTriangles(Fragment& inFrag)
 		}
 	}
 
-
 	ClampColor(outColor);
 	m_pColorBuffer->at(inFrag.PixelY * mBufferWidth + inFrag.PixelX) = outColor;
 	
-}
-
-void IBFRenderPipeline::FragmentShader(Fragment& frag, COLOR3& outColor) const
-{
-	COLOR3 texSampleColor = mFunction_SampleTexture(frag.Texcoord.x, frag.Texcoord.y);
-	outColor = frag.Color.xyz() * texSampleColor;// The origin color without light.
-
-	// For lights.
-	auto viewDir = frag.FragPos - mCameraPos;
-	for (auto pLight : BFContent::m_pLights)
-	{
-		if (pLight == nullptr) break;
-		if (DirectionLight* pDLight = dynamic_cast<DirectionLight*>(pLight))
-		{
-			auto lightDir = pDLight->Direction;
-			float diff = max(frag.Normal.CosineValue(-lightDir), 0.f);
-			auto reflectDir = Reflect(lightDir, frag.Normal);
-			float spec = (-viewDir).CosineValue(reflectDir);
-
-			COLOR3 ambient = pDLight->AmbientColor * texSampleColor;
-			COLOR3 diffuse = pDLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
-			COLOR3 specular = pDLight->SpecluarColor * spec * texSampleColor;
-
-			outColor += (ambient + diffuse + specular);
-			//std::cout << outColor << std::endl;
-		}
-		else if (PointLight* pPLight = dynamic_cast<PointLight*>(pLight))
-		{
-			auto lightDir = frag.FragPos - pPLight->Position;
-			float diff = max(frag.Normal.CosineValue(-lightDir), 0.f);
-			auto reflectDir = Reflect(lightDir, frag.Normal);
-			float spec = (-viewDir).CosineValue(reflectDir);
-
-			COLOR3 ambient = pPLight->AmbientColor * texSampleColor;
-			COLOR3 diffuse = pPLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
-			COLOR3 specular = pPLight->SpecluarColor * spec * texSampleColor;
-
-			// Attenuation.
-			float distance = (frag.FragPos - pPLight->Position).Length();
-			float attenuation = 1.f / (pPLight->Constant + pPLight->Linear * distance
-				+ pPLight->Quadratic * distance * distance);
-			ambient *= attenuation;
-			diffuse *= attenuation;
-			specular *= attenuation;
-
-			outColor += (ambient + diffuse + specular);
-		}
-		else if (SpotLight* pSLight = dynamic_cast<SpotLight*>(pLight))
-		{
-			auto lightDir = frag.FragPos - pSLight->Position;
-			float theta = lightDir.CosineValue(pSLight->Direction);
-			float intensity = Clamp((theta - pSLight->OutterTheta) / pSLight->Epsilon, 0.f, 1.f);
-
-			float diff = max(frag.Normal.CosineValue(-lightDir), 0.f);
-			auto reflectDir = Reflect(lightDir, frag.Normal);
-			float spec = (-viewDir).CosineValue(reflectDir);
-
-			COLOR3 ambient = pSLight->AmbientColor * texSampleColor;
-			COLOR3 diffuse = pSLight->DiffuseColor * diff * texSampleColor;// Should multiply by a material intensity.
-			COLOR3 specular = pSLight->SpecluarColor * spec * texSampleColor;
-
-			outColor += (ambient + diffuse * intensity + specular * intensity);
-
-		}
-	}
-
-	ClampColor(outColor);
 }
 
 bool IBFRenderPipeline::mFunction_HorizontalIntersect(float y, const VEC2 & v1, const VEC2 & v2, const VEC2 & v3, UINT & outX1, UINT & outX2)

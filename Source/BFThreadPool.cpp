@@ -2,7 +2,7 @@
 #include<string>
 
 std::vector<Task> BFThreadPool::tasks;
-//std::mutex BFThreadPool::mutex;
+std::mutex BFThreadPool::mutex;
 
 void BFThread::Run()
 {

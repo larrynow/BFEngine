@@ -52,7 +52,7 @@ int main()
 	DWORD lastTime = 0;
 	DWORD curTime;
 	UINT frame = 0;
-	//float max_fps = -1;
+	float max_fps = -1;
 	cuteMesh->RotateWithY(1.f);
 
 	while (!BFContent::ShouldFinish())
@@ -61,11 +61,11 @@ int main()
 		screen_dispatch();
 		curTime = timeGetTime();
 		float fps = 1 * 1000 / float(curTime - lastTime);
-		//if (fps > max_fps) max_fps = fps;
+		if (fps > max_fps) max_fps = fps;
 		std::string fpsStr = std::to_string(fps);
 		lastTime = curTime;
 		::SetConsoleTitleA(fpsStr.c_str());
-		//std::cout << fpsStr << '\r';
+		std::cout << std::to_string(max_fps) << '\r';
 		renderer->Clear();
 		
 		// Input.
@@ -83,13 +83,18 @@ int main()
 		}
 		//cubeMesh->RotateWithY(1.f);
 		//renderer->RenderMesh(cubeMesh);
+		float t1 = timeGetTime();
 
-		cuteMesh->RotateWithY(1.f);
+		//cuteMesh->RotateWithY(1.f);
 		renderer->RenderMesh(cuteMesh);
 
+		float t2 = timeGetTime();
 		renderer->Display();
-		
+		float t3 = timeGetTime();
+
+		//PRINT(t3 - t2);
+
 	}
 
-	system("pause");
+	//system("pause");
 }

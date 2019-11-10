@@ -15,9 +15,8 @@
 
 #include"BFCamera.h"
 
-#include"BFResourceManager.h"
 
-#include"BFGeometry.h"
+
 
 
 //#include"BFRenderPipeline.h"

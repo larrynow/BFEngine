@@ -5,13 +5,13 @@
 #include"BFTypes.h"
 #include"BFActor.h"
 #include"BFDeviceRenderer.h"
-#include "BFDeviceRendererWin32.h"
+#include"BFDeviceRendererWin32.h"
+#include"BFResourceManager.h"
 
+#include"BFGeometry.h"
 #include<unordered_map>
 #include<string>
 #include<functional>
-
-
 
 class BFContent
 {
